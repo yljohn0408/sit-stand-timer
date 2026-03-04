@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>久坐循环提醒</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192.png?text=Loop">
+    
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --work-color: #007aff;
+            --rest-color: #30d158;
+            --danger-color: #ff3b30;
+            --panel-bg: #2c2c2e;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            transition: background-color 0.5s;
+            touch-action: manipulation; /* 禁止双击缩放 */
+        }
+
+        body.mode-rest { background-color: #0a2a12; }
+        body.mode-work { background-color: #0a1220; }
+
+        .container { width: 90%; max-width: 400px; text-align: center; }
+
+        h1 { font-weight: 200; margin: 0 0 30px 0; opacity: 0.8; font-size: 1.5rem; }
+        
+        .timer-display {
+            font-size: 5.5rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            margin: 10px 0;
+            letter-spacing: -3px;
+        }
+
+        .mode-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.1);
+            text-transform: uppercase;
+        }
+
+        .settings-panel {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 18px;
+            margin-bottom: 30px;
+            text-align: left;
+            transition: opacity 0.3s;
+        }
+        
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .setting-row:last-child { margin-bottom: 0; }
+        .setting-label { font-size: 1rem; color: #ccc; }
+        
+        input[type="number"] {
+            background: #1c1c1e; border: 1px solid #3a3a3c; color: white;
+            font-size: 1.1rem; padding: 8px; border-radius: 8px; width: 70px; text-align: center;
+        }
+
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 30px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #3a3a3c; transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--work-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider.rest-theme { background-color: var(--rest-color); }
+
+        .btn-main {
+            width: 100%; padding: 18px; font-size: 1.2rem; border: none; border-radius: 16px;
+            font-weight: 600; cursor: pointer; transition: transform 0.1s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-start { background-color: var(--work-color); color: white; }
+        .btn-stop { background-color: var(--danger-color); color: white; }
+        body.mode-rest .btn-start { background-color: var(--rest-color); color: #000; }
+
+        .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); position: fixed; top: 0; left: 0; }
+        .progress-fill { height: 100%; background: var(--work-color); width: 0%; transition: width 1s linear; }
+        body.mode-rest .progress-fill { background: var(--rest-color); }
+
+        .status-text { margin-top: 20px; color: #888; font-size: 0.9rem; height: 20px; }
+    </style>
+</head>
+<body class="mode-work">
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <div class="container">
+        <h1 id="app-title">专注 & 运动</h1>
+        <div id="badge" class="mode-badge">待机中</div>
+        <div class="timer-display" id="timer">00:00</div>
+        <div class="settings-panel" id="settings">
+            <div class="setting-row">
+                <span class="setting-label">🧘 久坐时长 (分钟)</span>
+                <input type="number" id="work-input" value="45" min="1">
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">🏃 运动时长 (分钟)</span>
+                <input type="number" id="rest-input" value="5" min="1">
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">🔄 自动循环</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="loop-check" checked>
+                    <span class="slider" id="slider-ui"></span>
+                </label>
+            </div>
+        </div>
+        <button id="btn-toggle" class="btn-main btn-start">开始专注</button>
+        <div class="status-text" id="status-msg">准备开始</div>
+    </div>
+
+<script>
+    const STATE = { IDLE: 'idle', WORK: 'work', REST: 'rest' };
+    let currentState = STATE.IDLE;
+    let intervalId = null;
+    let endTime = null;
+    let totalSeconds = 0;
+    
+    const dom = {
+        body: document.body,
+        timer: document.getElementById('timer'),
+        badge: document.getElementById('badge'),
+        btn: document.getElementById('btn-toggle'),
+        settings: document.getElementById('settings'),
+        progress: document.getElementById('progress'),
+        status: document.getElementById('status-msg'),
+        slider: document.getElementById('slider-ui'),
+        inputs: {
+            work: document.getElementById('work-input'),
+            rest: document.getElementById('rest-input'),
+            loop: document.getElementById('loop-check')
+        }
+    };
+
+    function loadSettings() {
+        const saved = localStorage.getItem('sitAppConfig');
+        if (saved) {
+            const config = JSON.parse(saved);
+            dom.inputs.work.value = config.work || 45;
+            dom.inputs.rest.value = config.rest || 5;
+            dom.inputs.loop.checked = config.loop !== undefined ? config.loop : true;
+        }
+        updateDisplayTime(dom.inputs.work.value * 60);
+    }
+
+    function saveSettings() {
+        localStorage.setItem('sitAppConfig', JSON.stringify({
+            work: dom.inputs.work.value,
+            rest: dom.inputs.rest.value,
+            loop: dom.inputs.loop.checked
+        }));
+    }
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        if (type === 'finish_work') {
+            osc.frequency.setValueAtTime(880, now);
+            gain.gain.setValueAtTime(0.1, now);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } else if (type === 'finish_rest') {
+            osc.frequency.setValueAtTime(440, now);
+            gain.gain.setValueAtTime(0.1, now);
+            osc.start(now);
+            osc.stop(now + 0.8);
+        }
+    }
+
+    async function requestPermission() {
+        if ("Notification" in window && Notification.permission !== "granted") {
+            await Notification.requestPermission();
+        }
+    }
+
+    function sendNotify(title, body) {
+        if (Notification.permission === "granted") {
+            new Notification(title, { body: body });
+        }
+    }
+    
+    function updateDisplayTime(seconds) {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        dom.timer.innerText = `${m}:${s}`;
+    }
+
+    // --- 核心修复：状态切换逻辑 ---
+    function switchState(newState) {
+        // 1. 无论去往哪个状态，先强杀旧定时器
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+
+        currentState = newState;
+        
+        // UI清理
+        dom.body.classList.remove('mode-work', 'mode-rest');
+        dom.slider.classList.remove('rest-theme');
+
+        // 状态分支
+        if (newState === STATE.IDLE) {
+            // 回到待机
+            dom.body.classList.add('mode-work');
+            dom.badge.innerText = "已停止";
+            dom.btn.innerText = "开始专注";
+            dom.btn.className = "btn-main btn-start";
+            dom.progress.style.width = '0%';
+            
+            // 恢复设置面板
+            dom.settings.style.opacity = '1';
+            dom.settings.style.pointerEvents = 'auto';
+            dom.status.innerText = "准备就绪";
+            
+            // 重置显示时间为当前设定的工作时长
+            updateDisplayTime(dom.inputs.work.value * 60);
+            return; // 结束执行
+        }
+
+        // 运行状态 (Work 或 Rest)
+        dom.settings.style.opacity = '0.5';
+        dom.settings.style.pointerEvents = 'none';
+
+        if (newState === STATE.WORK) {
+            dom.body.classList.add('mode-work');
+            dom.badge.innerText = "专注中 (Sitting)";
+            dom.btn.innerText = "停止";
+            dom.btn.className = "btn-main btn-stop";
+            totalSeconds = parseInt(dom.inputs.work.value) * 60;
+        } else if (newState === STATE.REST) {
+            dom.body.classList.add('mode-rest');
+            dom.slider.classList.add('rest-theme');
+            dom.badge.innerText = "运动中 (Active)";
+            dom.btn.innerText = "跳过休息";
+            dom.btn.className = "btn-main btn-start"; 
+            totalSeconds = parseInt(dom.inputs.rest.value) * 60;
+        }
+
+        // 启动新计时器
+        endTime = Date.now() + (totalSeconds * 1000);
+        updateDisplayTime(totalSeconds);
+        
+        // 立即执行一次 tick 并开启循环
+        tick(); 
+        intervalId = setInterval(tick, 1000);
+    }
+
+    function tick() {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+        
+        updateDisplayTime(remaining);
+        
+        const elapsed = totalSeconds - remaining;
+        const pct = (elapsed / totalSeconds) * 100;
+        dom.progress.style.width = `${pct}%`;
+
+        if (remaining <= 0) {
+            handleComplete();
+        }
+    }
+
+    function handleComplete() {
+        // 完成时也要清除定时器
+        if (intervalId) { clearInterval(intervalId); intervalId = null; }
+
+        if (currentState === STATE.WORK) {
+            playSound('finish_work');
+            sendNotify("🛑 时间到！", "站起来！去接杯水，做个拉伸！");
+            
+            if (dom.inputs.loop.checked) {
+                // 利用 alert 中断，确保用户感知，点击确定后进入下一轮
+                setTimeout(() => {
+                    alert("⏰ 久坐提醒：请起立活动！\n(点击确定开始运动计时)");
+                    switchState(STATE.REST);
+                }, 100);
+            } else {
+                switchState(STATE.IDLE);
+            }
+        } else if (currentState === STATE.REST) {
+            playSound('finish_rest');
+            sendNotify("💻 休息结束", "状态已恢复，开始专注工作吧。");
+
+            if (dom.inputs.loop.checked) {
+                setTimeout(() => {
+                    alert("🔔 休息结束：该回来工作了！\n(点击确定开始专注计时)");
+                    switchState(STATE.WORK);
+                }, 100);
+            } else {
+                switchState(STATE.IDLE);
+            }
+        }
+    }
+
+    dom.btn.addEventListener('click', () => {
+        saveSettings();
+        requestPermission();
+        if (currentState === STATE.IDLE) {
+            switchState(STATE.WORK);
+        } else {
+            switchState(STATE.IDLE);
+        }
+    });
+
+    dom.inputs.work.addEventListener('input', (e) => {
+        if (currentState === STATE.IDLE) updateDisplayTime(e.target.value * 60);
+    });
+
+    loadSettings();
+</script>
+</body>
+</html>
