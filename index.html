@@ -15,7 +15,7 @@
             --bg-rest: radial-gradient(circle at 50% 30%, #1a3b2a 0%, #000000 70%);
             --accent-work: #4facfe;
             --accent-rest: #43e97b;
-            --glass-panel: rgba(255, 255, 255, 0.08);
+            --glass-panel: rgba(255, 255, 255, 0.1);
             --text-muted: rgba(255, 255, 255, 0.5);
         }
         
@@ -37,163 +37,104 @@
             touch-action: manipulation;
         }
 
+        /* 视觉警报：屏幕闪烁动画 */
+        @keyframes strobe-flash {
+            0% { background-color: #000; }
+            50% { background-color: #555; }
+            100% { background-color: #000; }
+        }
+        
+        /* 红色警报闪烁 */
+        body.alarm-active {
+            animation: strobe-flash 0.5s infinite;
+            background-image: none !important; /* 强制覆盖背景图 */
+            background-color: #300 !important;
+        }
+
         body.mode-rest { background-image: var(--bg-rest); }
 
-        .container {
-            width: 85%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 10;
-        }
+        .container { width: 85%; max-width: 400px; display: flex; flex-direction: column; align-items: center; z-index: 10; }
 
         .status-pill {
-            padding: 6px 16px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            font-size: 13px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-            transition: all 0.5s;
-            border: 1px solid rgba(255,255,255,0.05);
+            padding: 6px 16px; border-radius: 20px; background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);
         }
-        
-        body.mode-work .status-pill { color: var(--accent-work); border-color: rgba(79, 172, 254, 0.3); box-shadow: 0 0 15px rgba(79, 172, 254, 0.2); }
-        body.mode-rest .status-pill { color: var(--accent-rest); border-color: rgba(67, 233, 123, 0.3); box-shadow: 0 0 15px rgba(67, 233, 123, 0.2); }
+        body.mode-work .status-pill { color: var(--accent-work); border-color: rgba(79, 172, 254, 0.3); }
+        body.mode-rest .status-pill { color: var(--accent-rest); border-color: rgba(67, 233, 123, 0.3); }
+        body.alarm-active .status-pill { color: #ff3b30; border-color: #ff3b30; background: #fff; }
 
-        .timer-wrapper { position: relative; margin: 10px 0 50px 0; }
-        
+        .timer-wrapper { position: relative; margin: 10px 0 40px 0; }
         .timer-display {
             font-size: 96px; font-weight: 200; line-height: 1; font-variant-numeric: tabular-nums;
             letter-spacing: -3px; text-align: center;
             background: linear-gradient(180deg, #fff, rgba(255,255,255,0.6));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            transition: all 0.5s;
         }
-
+        
+        /* 呼吸动画 */
         @keyframes breathe {
-            0%, 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 20px rgba(255,255,255,0.1); }
-            50% { opacity: 0.8; transform: scale(0.98); text-shadow: 0 0 0px rgba(255,255,255,0); }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.98); }
         }
         body.running .timer-display { animation: breathe 4s infinite ease-in-out; }
+        body.alarm-active .timer-display { animation: none; color: #fff; -webkit-text-fill-color: #fff; }
 
-        .settings-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 30px; transition: all 0.3s;
-        }
-
-        .setting-card {
-            background: var(--glass-panel); border-radius: 18px; padding: 15px; text-align: center;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;
-        }
-
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 30px; transition: all 0.3s; }
+        .setting-card { background: var(--glass-panel); border-radius: 18px; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .setting-card.full-width { grid-column: span 2; flex-direction: row; justify-content: space-between; padding: 15px 25px; }
+        
         .setting-label { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
-        
-        input[type="number"] {
-            background: transparent; border: none; color: #fff; font-size: 28px; font-weight: 500;
-            text-align: center; width: 100%; padding: 0; font-family: "SF Pro Display"; outline: none;
-        }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        
+        input[type="number"] { background: transparent; border: none; color: #fff; font-size: 28px; font-weight: 500; text-align: center; width: 100%; padding: 0; outline: none; font-family: "SF Pro Display"; }
         .unit { font-size: 12px; color: var(--text-muted); margin-top: -5px;}
-
-        select.sound-select {
-            appearance: none; -webkit-appearance: none; background: transparent; border: none;
-            color: #fff; font-size: 16px; font-weight: 500; text-align: right; direction: rtl;
-            padding-right: 0px; outline: none; font-family: -apple-system;
-        }
-        select.sound-select option { background-color: #1c1c1e; color: #fff; }
-
+        
         .switch { position: relative; width: 50px; height: 30px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(255,255,255,0.2); border-radius: 34px; transition: .4s;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px;
-            background-color: white; border-radius: 50%; transition: .4s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.2); border-radius: 34px; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: .4s; }
         input:checked + .slider { background-color: var(--accent-work); }
         body.mode-rest input:checked + .slider { background-color: var(--accent-rest); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .btn-main {
-            width: 100%; height: 64px; border-radius: 32px; border: none;
-            font-size: 18px; font-weight: 600; color: #fff;
-            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
-            cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 1px;
-        }
-        
+        .btn-main { width: 100%; height: 64px; border-radius: 32px; border: none; font-size: 18px; font-weight: 600; color: #fff; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
         .btn-start { background: linear-gradient(135deg, #0061ff, #60efff); box-shadow: 0 10px 30px rgba(0, 97, 255, 0.3); }
         body.mode-rest .btn-start { background: linear-gradient(135deg, #43e97b, #38f9d7); box-shadow: 0 10px 30px rgba(67, 233, 123, 0.3); color: #000; }
         .btn-stop { background: rgba(255, 59, 48, 0.15); color: #ff3b30; border: 1px solid rgba(255, 59, 48, 0.3); }
-        .btn-main:active { transform: scale(0.97); }
-
+        
         .progress-line { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.1); }
         .progress-fill { height: 100%; width: 0%; background: #fff; box-shadow: 0 0 10px #fff; transition: width 1s linear; }
 
-        #silent-player { display: none; }
-        .hint { margin-top: 20px; font-size: 12px; color: var(--text-muted); opacity: 0.6; }
+        .hint { margin-top: 20px; font-size: 12px; color: var(--text-muted); opacity: 0.6; text-align: center; }
+        .warning-text { color: #ff9f0a; font-size: 11px; margin-top: 5px; }
     </style>
 </head>
 <body class="mode-work">
-
     <div class="progress-line"><div class="progress-fill" id="progress"></div></div>
-    
-    <audio id="silent-player" loop playsinline>
-        <source src="data:audio/mp3;base64,SUQzBAAAAAABAFRYWFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFhYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFhYAAAAHAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAFRTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAQN6AAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAAEAAAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mpeg">
-    </audio>
 
     <div class="container">
         <div id="badge" class="status-pill">准备就绪</div>
-
-        <div class="timer-wrapper">
-            <div class="timer-display" id="timer">00:00</div>
-        </div>
+        <div class="timer-wrapper"><div class="timer-display" id="timer">00:00</div></div>
 
         <div class="settings-grid" id="settings">
             <div class="setting-card">
                 <div class="setting-label">专注时长</div>
-                <input type="number" id="work-input" value="45" inputmode="numeric">
-                <div class="unit">分钟</div>
+                <input type="number" id="work-input" value="45" inputmode="numeric"><div class="unit">分钟</div>
             </div>
             <div class="setting-card">
                 <div class="setting-label">休息时长</div>
-                <input type="number" id="rest-input" value="5" inputmode="numeric">
-                <div class="unit">分钟</div>
+                <input type="number" id="rest-input" value="5" inputmode="numeric"><div class="unit">分钟</div>
             </div>
-            
             <div class="setting-card full-width">
-                <div class="setting-label" style="margin:0; font-size: 14px;">提示音效</div>
-                <select id="sound-select" class="sound-select">
-                    <option value="standard">标准 (Standard)</option>
-                    <option value="soft">温润 (Chime)</option>
-                    <option value="alarm">急促 (Alarm)</option>
-                    <option value="scifi">科幻 (Warp)</option>
-                </select>
-            </div>
-
-            <div class="setting-card full-width">
-                <div class="setting-label" style="margin:0; font-size: 14px;">自动循环</div>
+                <div class="setting-label">自动循环</div>
                 <label class="switch">
-                    <input type="checkbox" id="loop-check" checked>
-                    <span class="slider"></span>
+                    <input type="checkbox" id="loop-check" checked><span class="slider"></span>
                 </label>
             </div>
         </div>
 
-        <button id="btn-toggle" class="btn-main btn-start">
-            <span id="btn-text">开始专注</span>
-        </button>
-
-        <div class="hint" id="status-msg">点击上方数字可修改时间</div>
+        <button id="btn-toggle" class="btn-main btn-start"><span id="btn-text">开始专注</span></button>
+        <div class="hint" id="status-msg">点击上方数字修改 · 静音下请留意震动</div>
     </div>
 
 <script>
@@ -203,8 +144,10 @@
     let endTime = null;
     let totalSeconds = 0;
     
-    const silentPlayer = document.getElementById('silent-player');
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Web Audio API (白噪音保活用，静音下虽然没声音，但能保活)
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = new AudioContext();
+    let keepAliveNode = null;
 
     const dom = {
         body: document.body,
@@ -218,179 +161,103 @@
         inputs: {
             work: document.getElementById('work-input'),
             rest: document.getElementById('rest-input'),
-            loop: document.getElementById('loop-check'),
-            sound: document.getElementById('sound-select')
+            loop: document.getElementById('loop-check')
         }
     };
 
-    function loadSettings() {
-        const saved = localStorage.getItem('sitAppConfig');
-        if (saved) {
-            const config = JSON.parse(saved);
-            dom.inputs.work.value = config.work || 45;
-            dom.inputs.rest.value = config.rest || 5;
-            dom.inputs.loop.checked = config.loop !== undefined ? config.loop : true;
-            dom.inputs.sound.value = config.sound || 'standard';
-        }
-        updateDisplayTime(dom.inputs.work.value * 60);
-    }
+    // --- 1. 白噪音保活 (核心：让iOS以为你在听歌，从而允许后台发通知) ---
+    function startWhiteNoise() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (keepAliveNode) return;
 
-    function saveSettings() {
-        localStorage.setItem('sitAppConfig', JSON.stringify({
-            work: dom.inputs.work.value,
-            rest: dom.inputs.rest.value,
-            loop: dom.inputs.loop.checked,
-            sound: dom.inputs.sound.value
-        }));
-    }
+        const bufferSize = 2 * audioCtx.sampleRate;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
 
-    // --- 核心修复：MediaSession API (伪装成音乐播放器) ---
-    function setupMediaSession() {
+        keepAliveNode = audioCtx.createBufferSource();
+        keepAliveNode.buffer = noiseBuffer;
+        keepAliveNode.loop = true;
+        
+        // 极低音量，避免打扰，但必须有信号输出
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.001; 
+
+        keepAliveNode.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        keepAliveNode.start(0);
+
         if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
-                title: currentState === STATE.WORK ? '专注中...' : '休息中...',
-                artist: 'Focus Timer',
-                album: '保持后台运行',
+                title: '专注计时中',
+                artist: '请勿关闭后台',
                 artwork: [{ src: './icon.png', sizes: '512x512', type: 'image/png' }]
             });
-
-            // 拦截播放控制，防止用户手滑在锁屏界面点了暂停
-            navigator.mediaSession.setActionHandler('play', function() {
-                silentPlayer.play();
-            });
-            navigator.mediaSession.setActionHandler('pause', function() {
-                // 如果用户在锁屏点了暂停，我们立刻重新播放！
-                silentPlayer.play();
-            });
+            navigator.mediaSession.setActionHandler('play', () => {});
+            navigator.mediaSession.setActionHandler('pause', () => {});
         }
     }
 
-    function playTone(preset, type) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const now = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        if (preset === 'standard') {
-            osc.type = type === 'finish_work' ? 'square' : 'sine';
-            osc.frequency.setValueAtTime(type === 'finish_work' ? 800 : 440, now);
-            gain.gain.setValueAtTime(0.1, now);
-            osc.start(now);
-            osc.stop(now + (type === 'finish_work' ? 0.15 : 1));
-        } else if (preset === 'soft') {
-            osc.type = 'sine';
-            if (type === 'finish_work') {
-                osc.frequency.setValueAtTime(660, now); 
-                osc.frequency.exponentialRampToValueAtTime(550, now + 0.1);
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
-                osc.start(now);
-                osc.stop(now + 1.5);
-            } else {
-                osc.frequency.setValueAtTime(440, now);
-                gain.gain.setValueAtTime(0.1, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
-                osc.start(now);
-                osc.stop(now + 1);
-            }
-        } else if (preset === 'alarm') {
-            osc.type = type === 'finish_work' ? 'sawtooth' : 'square';
-            if (type === 'finish_work') {
-                osc.frequency.setValueAtTime(1000, now);
-                osc.frequency.linearRampToValueAtTime(800, now + 0.2);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
-            } else {
-                osc.frequency.setValueAtTime(500, now);
-                gain.gain.setValueAtTime(0.1, now);
-                osc.start(now);
-                osc.stop(now + 0.5);
-            }
-        } else if (preset === 'scifi') {
-            if (type === 'finish_work') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(200, now);
-                osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                osc.start(now);
-                osc.stop(now + 0.3);
-            } else {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(600, now);
-                osc.frequency.exponentialRampToValueAtTime(200, now + 0.5);
-                gain.gain.setValueAtTime(0.1, now);
-                gain.gain.linearRampToValueAtTime(0, now + 0.5);
-                osc.start(now);
-                osc.stop(now + 0.5);
-            }
-        }
+    function stopWhiteNoise() {
+        if (keepAliveNode) { try { keepAliveNode.stop(); } catch(e) {} keepAliveNode = null; }
+        if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
     }
 
-    function playAlert(type) {
-        const preset = dom.inputs.sound.value;
-        playTone(preset, type);
+    // --- 2. 视觉警报 (Visual Strobe) ---
+    // 既然听不见，那就闪瞎眼
+    function triggerVisualAlarm() {
+        dom.body.classList.add('alarm-active');
+        // 5秒后停止闪烁，避免太费电
+        setTimeout(() => {
+            dom.body.classList.remove('alarm-active');
+        }, 5000);
     }
 
-    // --- 强化版音频保活 ---
-    function startKeepAlive() {
-        // 1. 确保 HTML Audio 元素在播放
-        silentPlayer.volume = 0.05; // 稍微增加一点音量防止被系统判定为无效音频
-        silentPlayer.play().then(() => {
-            // 2. 更新系统媒体中心信息 (锁屏显示)
-            setupMediaSession();
-        }).catch(e => console.log("Silent play error:", e));
-        
-        // 3. 确保 AudioContext 活跃
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+    // --- 3. 震动模拟 (Notification Burst) ---
+    // 既然不能直接调用震动马达，就连续发通知，引发系统震动
+    async function triggerVibrationBurst(title, body) {
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+        // 连续发送 5 次通知，间隔 1.5 秒
+        // 这会造成手机间歇性震动，像闹钟一样
+        let count = 0;
+        const burstInterval = setInterval(() => {
+            count++;
+            try {
+                // 使用 tag 确保不会堆叠太多，但 renotify: true 确保每次都震动
+                new Notification(title + (count > 1 ? ` (${count})` : ""), { 
+                    body: body, 
+                    tag: 'burst-alarm',
+                    renotify: true 
+                });
+            } catch (e) { console.error(e); }
+
+            if (count >= 5) clearInterval(burstInterval);
+        }, 1500); 
     }
 
-    function stopKeepAlive() {
-        silentPlayer.pause();
-        silentPlayer.currentTime = 0;
-        // 清除锁屏媒体信息
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = null;
-        }
-    }
-
+    // --- 权限申请 ---
     async function requestPermission() {
         if ("Notification" in window && Notification.permission !== "granted") {
             await Notification.requestPermission();
         }
     }
 
-    function sendNotify(title, body) {
-        if (document.visibilityState === 'visible') return;
-        if ("Notification" in window && Notification.permission === "granted") {
-            try { new Notification(title, { body: body, tag: 'sit-stand', renotify: true }); } catch (e) {}
-        }
-    }
-    
+    // --- 主逻辑 ---
     function updateDisplayTime(seconds) {
         const m = Math.floor(seconds / 60).toString().padStart(2, '0');
         const s = (seconds % 60).toString().padStart(2, '0');
         dom.timer.innerText = `${m}:${s}`;
-        document.title = `${m}:${s} - ${currentState === STATE.WORK ? '专注中' : '休息中'}`;
-        
-        // 实时更新锁屏界面的状态文字
-        if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
-            // 注意：频繁更新 Metadata 可能会消耗性能，这里不建议每秒更新，仅更新状态
-        }
+        document.title = `${m}:${s} - 专注时钟`;
     }
 
     function switchState(newState) {
         if (intervalId) { clearInterval(intervalId); intervalId = null; }
         currentState = newState;
-        dom.body.classList.remove('mode-work', 'mode-rest', 'running');
+        dom.body.classList.remove('mode-work', 'mode-rest', 'running', 'alarm-active');
         
         if (newState === STATE.IDLE) {
-            stopKeepAlive();
+            stopWhiteNoise();
             dom.body.classList.add('mode-work');
             dom.badge.innerText = "准备就绪";
             dom.btnText.innerText = "开始专注";
@@ -399,13 +266,12 @@
             dom.settings.style.opacity = '1';
             dom.settings.style.pointerEvents = 'auto';
             dom.settings.style.transform = 'scale(1)';
-            dom.status.innerText = "点击上方数字可修改时间";
+            dom.status.innerText = "点击上方数字修改 · 静音下请留意震动";
             updateDisplayTime(dom.inputs.work.value * 60);
             return;
         }
 
-        // 启动保活
-        startKeepAlive();
+        startWhiteNoise(); // 必须保活，否则后台发不出通知
         
         dom.body.classList.add('running');
         dom.settings.style.opacity = '0.3';
@@ -418,18 +284,15 @@
             dom.btnText.innerText = "停止计时";
             dom.btn.className = "btn-main btn-stop";
             totalSeconds = parseInt(dom.inputs.work.value) * 60;
-            dom.status.innerText = "App正在后台运行，请勿强制关闭";
+            dom.status.innerText = "运行中...";
         } else if (newState === STATE.REST) {
             dom.body.classList.add('mode-rest');
             dom.badge.innerText = "休息中";
             dom.btnText.innerText = "跳过休息";
             dom.btn.className = "btn-main btn-start"; 
             totalSeconds = parseInt(dom.inputs.rest.value) * 60;
-            dom.status.innerText = "站起来活动一下！";
+            dom.status.innerText = "起立活动！";
         }
-        
-        // 更新锁屏信息
-        setupMediaSession();
 
         endTime = Date.now() + (totalSeconds * 1000);
         updateDisplayTime(totalSeconds);
@@ -438,11 +301,6 @@
     }
 
     function tick() {
-        // 暴力保活：如果发现音频被暂停了，强行恢复
-        if (silentPlayer.paused && currentState !== STATE.IDLE) {
-            silentPlayer.play().catch(()=>{});
-        }
-        
         const now = Date.now();
         const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
         updateDisplayTime(remaining);
@@ -456,43 +314,28 @@
         if (intervalId) { clearInterval(intervalId); intervalId = null; }
         dom.settings.style.transform = 'scale(1)';
 
-        if (currentState === STATE.WORK) {
-            let count = 0;
-            const maxCount = dom.inputs.sound.value === 'alarm' ? 6 : 3;
+        // 1. 触发视觉警报 (如果此时亮屏，屏幕会闪烁)
+        triggerVisualAlarm();
+
+        const isWork = currentState === STATE.WORK;
+        
+        // 2. 触发震动轰炸 (通过发送多次通知实现)
+        if (isWork) {
+            triggerVibrationBurst("🛑 时间到！", "已自动进入休息模式，请起立活动！");
             
-            playAlert('finish_work');
-            const alarmInt = setInterval(() => {
-                playAlert('finish_work');
-                count++;
-                if(count >= maxCount) clearInterval(alarmInt);
-            }, 800);
-
-            sendNotify("🛑 时间到！", "已自动进入休息模式，请起立活动！");
-
-            if (dom.inputs.loop.checked) {
-                switchState(STATE.REST);
-            } else {
-                alert("⏰ 专注结束！");
-                switchState(STATE.IDLE);
-            }
-        } else if (currentState === STATE.REST) {
-            playAlert('finish_rest');
-            sendNotify("💻 休息结束", "已自动开始专注，请回座。");
-            if (dom.inputs.loop.checked) {
-                switchState(STATE.WORK);
-            } else {
-                alert("🔔 休息结束！");
-                switchState(STATE.IDLE);
-            }
+            if (dom.inputs.loop.checked) switchState(STATE.REST);
+            else { alert("专注结束！"); switchState(STATE.IDLE); }
+        } else {
+            triggerVibrationBurst("💻 休息结束", "已自动开始专注，请回座。");
+            
+            if (dom.inputs.loop.checked) switchState(STATE.WORK);
+            else { alert("休息结束！"); switchState(STATE.IDLE); }
         }
     }
 
     dom.btn.addEventListener('click', () => {
-        saveSettings();
         requestPermission();
-        // 必须在用户交互时初始化音频
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        
         currentState === STATE.IDLE ? switchState(STATE.WORK) : switchState(STATE.IDLE);
     });
 
@@ -500,16 +343,16 @@
         input.addEventListener('input', (e) => {
             if (currentState === STATE.IDLE) updateDisplayTime(dom.inputs.work.value * 60);
         });
-        input.addEventListener('focus', (e) => e.target.select());
-    });
-    
-    dom.inputs.sound.addEventListener('change', () => {
-        saveSettings();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        playAlert('finish_work');
     });
 
-    loadSettings();
+    const saved = localStorage.getItem('sitAppConfig');
+    if (saved) {
+        const config = JSON.parse(saved);
+        dom.inputs.work.value = config.work || 45;
+        dom.inputs.rest.value = config.rest || 5;
+        dom.inputs.loop.checked = config.loop !== undefined ? config.loop : true;
+        updateDisplayTime(dom.inputs.work.value * 60);
+    }
 </script>
 </body>
 </html>
